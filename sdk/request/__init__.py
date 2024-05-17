@@ -3,11 +3,12 @@ from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
 from aiohttp import ClientSession
+from loguru import logger
 from requests.auth import AuthBase
 
 from core.enums import Constants
 from sdk.request.decorators import request_handler
-from sdk.request.exceptions import APIException
+from sdk.request.exceptions import ApiError
 
 if TYPE_CHECKING:
     from sdk.modules.posts import CommentData, PostData
@@ -48,10 +49,12 @@ class APIRequestBase:
     async def _fetch_data(self, url, params, raise_on_failure):
         async with ClientSession() as session:
             headers = {"Authorization": f"Basic  {self._auth.token}"}
+            url = url.replace("api", "apis")
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status != 200:
                     if raise_on_failure:
-                        raise APIException("something went wrong")
+                        raise ApiError(response.status, response.reason)
+                    logger.error(response.reason)
                     return []
                 return await response.json()
 
@@ -59,7 +62,8 @@ class APIRequestBase:
         response = requests.get(url, auth=self._auth, params=self._params)
         if response.status_code != 200:
             if raise_on_failure:
-                raise APIException("something went wrong")
+                raise ApiError(response.status_code, str(response.text))
+            logger.error(response.text)
             return []
 
         return response.json()
@@ -70,7 +74,7 @@ class APIRequestRetrieveMixin:
     async def retrieve(
         self, model_id: int, raise_on_failure=False
     ) -> Union["PostData", "TodoData", "CommentData", None]:
-        data_json = self.fetch_data_sync(
+        data_json = self._fetch_data_sync(
             f"{self.APPLICATION_URLS[self._application]}/{self._resource}/{model_id}",
             raise_on_failure,
         )
@@ -84,7 +88,7 @@ class APIRequestAllMixin:
         self, raise_on_failure=False
     ) -> List[Union["PostData", "TodoData", "CommentData", None]]:
         url = f"{self.APPLICATION_URLS[self._application]}/{self._resource}/"
-        data_json = self.fetch_data_sync(url, raise_on_failure)
+        data_json = self._fetch_data_sync(url, raise_on_failure)
         if isinstance(data_json, dict):
             total_pages = data_json.get("total_pages")
             tasks = set()
@@ -96,7 +100,7 @@ class APIRequestAllMixin:
                     params.update({"page": page_count + 1})
                     tasks.add(
                         asyncio.create_task(
-                            self.fetch_data(url, params, raise_on_failure=False)
+                            self._fetch_data(url, params, raise_on_failure)
                         )
                     )
 
@@ -104,7 +108,8 @@ class APIRequestAllMixin:
 
             data = data_json["data"]
             for ar in async_response:
-                data.extend(ar["data"])
+                if ar:
+                    data.extend(ar["data"])
         else:
             data = data_json
 
@@ -121,11 +126,11 @@ class APIRequest(APIRequestReadOnly):
         self, payload: Dict, raise_on_failure=False
     ) -> Union["PostData", "TodoData", "CommentData"]:
         response = requests.post(
-            f"{self.BASE_URL}/{self._resource}/", data=payload, auth=self._auth
+            f"{self.APPLICATION_URLS[self._application]}/{self._resource}/", data=payload, auth=self._auth
         )
         if response.status_code != 201:
             if raise_on_failure:
-                raise APIException("something went wrong")
+                raise ApiError(response.status_code, response.text)
             return None
         data = response.json()
         return self._model(**data)
