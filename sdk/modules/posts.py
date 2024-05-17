@@ -4,12 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from core.enums import Constants
 from sdk.modules.decorators import insert_api_module_attribute
-from sdk.request import (
-    APIRequest,
-    APIRequestAllMixin,
-    APIRequestBase,
-    APIRequestRetrieveMixin,
-)
+from sdk.request import APIListAllMixin, APIRequest, APIRequestBase, APIRetrieveMixin
 
 
 @dataclass
@@ -21,7 +16,7 @@ class CommentData:
     id: Optional[int] = None
 
 
-class Comments(APIRequestBase, APIRequestAllMixin):
+class Comments(APIRequestBase, APIListAllMixin):
 
     RESOURCE = "posts/{0}/comments"
     MODEL = CommentData
@@ -69,7 +64,7 @@ class Posts(APIRequest):
         return super().all(raise_on_failure)
 
 
-class PostsReadOnly(APIRequestBase, APIRequestAllMixin):
+class PostsReadOnly(APIRequestBase, APIListAllMixin):
     RESOURCE = "posts"
     MODEL = PostData
 

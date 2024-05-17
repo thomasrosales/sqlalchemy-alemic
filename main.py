@@ -1,11 +1,25 @@
 from database.controllers import create_user, get_user_by_id
 from sdk.client import Client, client
+from sdk.modules.posts import PostData
+from sdk.modules.users import UserData
 
 if __name__ == "__main__":
     users = client.users.all()
     print(users)
-    post1 = client.posts.retrieve(1)
+    post1 = client.posts.retrieve(1000)
     print(post1)
+    post_to_be_created = [
+        PostData(
+            userId=1,
+            title=f"Post-{index}",
+            body=f"My body {index}",
+        )
+        for index in range(10)
+    ]
+
+    posts = client.posts.create_bulk(post_to_be_created)
+    print(posts)
+
     """
     spongebob = get_user_by_id(1)
     sandy = get_user_by_id(2)
@@ -48,7 +62,4 @@ if __name__ == "__main__":
     print(post2.comments.list())
 
     # print(client.todos.retrieve(197))
-
-    # post = PostData(body="ttt", userId=1, title="asd")
-    # print(client.posts.create(post.to_payload()))
     """

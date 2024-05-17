@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from sdk.modules.todos import TodoData
 
 from .auth import BearerAuth
-from .mixins import APIRequestAllMixin, APIRequestRetrieveMixin
+from .mixins import APICreateMixin, APIListAllMixin, APIRetrieveMixin
 
 
 class APIRequestBase:
@@ -42,44 +42,41 @@ class APIRequestBase:
         async with ClientSession() as session:
             headers = {"Authorization": f"Basic  {self._auth.token}"}
             async with session.get(url, headers=headers, params=params) as response:
-                if response.status != 200:
-                    if raise_on_failure:
-                        raise ApiError(response.status, response.reason)
-                    logger.error(response.reason)
-                    return []
-                return await response.json()
+                if 200 <= response.status < 300:
+                    return await response.json()
+                if raise_on_failure:
+                    raise ApiError(response.status, response.reason)
+                logger.error(response.reason)
+                return []
 
-    def _fetch_data_sync(self, url, raise_on_failure):
+    async def _create_model(self, url, data, params, raise_on_failure):
+        async with ClientSession() as session:
+            headers = {"Authorization": f"Basic  {self._auth.token}"}
+            async with session.post(
+                url, headers=headers, params=params, data=data
+            ) as response:
+                if 200 <= response.status < 300:
+                    return await response.json()
+                if raise_on_failure:
+                    raise ApiError(response.status, response.reason)
+                logger.error(response.reason)
+                return None
+
+    def _fetch_data_sync(self, url, raise_on_failure, single=False):
         response = requests.get(url, auth=self._auth, params=self._params)
-        if response.status_code != 200:
-            if raise_on_failure:
-                raise ApiError(response.status_code, str(response.text))
-            logger.error(response.text)
-            return []
+        if 200 <= response.status_code < 300:
+            return response.json()
+        if raise_on_failure:
+            raise ApiError(response.status_code, str(response.text))
+        logger.error(response.text)
+        return {} if single else []
 
-        return response.json()
 
-
-class APIRequestReadOnly(APIRequestBase, APIRequestAllMixin, APIRequestRetrieveMixin):
+class APIRequestReadOnly(APIRequestBase, APIListAllMixin, APIRetrieveMixin):
     pass
 
 
-class APIRequest(APIRequestReadOnly):
-
-    def create(
-        self, payload: Dict, raise_on_failure=False
-    ) -> Union["PostData", "TodoData", "CommentData"]:
-        response = requests.post(
-            f"{self.APPLICATION_URLS[self._application]}/{self._resource}/",
-            data=payload,
-            auth=self._auth,
-        )
-        if response.status_code != 201:
-            if raise_on_failure:
-                raise ApiError(response.status_code, response.text)
-            return None
-        data = response.json()
-        return self._model(**data)
+class APIRequest(APIRequestReadOnly, APICreateMixin):
 
     def update(self):
         pass
