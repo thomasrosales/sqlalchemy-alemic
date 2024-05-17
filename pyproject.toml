@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "sqlalchemy-alemic"
+version = "0.1.0"
+description = ""
+authors = ["Tomás Rosales"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+black = "^24.4.2"
+sqlalchemy = "^2.0.30"
+ipython = "8.12"
+psycopg2-binary = "^2.9.9"
+alembic = "^1.13.1"
+isort = "^5.13.2"
+harlequin-postgres = "^0.2.2"
+environs = "^11.0.0"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
