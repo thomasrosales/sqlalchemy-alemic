@@ -2,7 +2,7 @@ from database.controllers import create_user, get_user_by_id
 from sdk.client import Client, client
 
 if __name__ == "__main__":
-    users = client.users.list()
+    users = client.users.all()
     print(users)
     post1 = client.posts.retrieve(1)
     print(post1)

@@ -21,7 +21,7 @@ class APIRequestRetrieveMixin:
 
 class APIRequestAllMixin:
 
-    async def list(
+    async def all(
         self, raise_on_failure=False
     ) -> List[Union["PostData", "TodoData", "CommentData", None]]:
         url = f"{self.APPLICATION_URLS[self._application]}/{self._resource}/"

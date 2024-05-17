@@ -30,8 +30,8 @@ class Comments(APIRequestBase, APIRequestAllMixin):
         resource = self.RESOURCE.format(related_instance_id)
         super().__init__(Constants.BASE_URL, self.MODEL, resource, token)
 
-    def list(self, raise_on_failure=False) -> List[Union[CommentData, None]]:
-        return asyncio.run(super().list(raise_on_failure))
+    def all(self, raise_on_failure=False) -> List[Union[CommentData, None]]:
+        return asyncio.run(super().all(raise_on_failure))
 
 
 @dataclass
@@ -65,8 +65,8 @@ class Posts(APIRequest):
         return super().retrieve(model_id, raise_on_failure)
 
     @insert_api_module_attribute("_comments", Comments)
-    def list(self, raise_on_failure=False) -> List[Union[PostData, None]]:
-        return super().list(raise_on_failure)
+    def all(self, raise_on_failure=False) -> List[Union[PostData, None]]:
+        return super().all(raise_on_failure)
 
 
 class PostsReadOnly(APIRequestBase, APIRequestAllMixin):
@@ -84,5 +84,5 @@ class PostsReadOnly(APIRequestBase, APIRequestAllMixin):
         )
 
     @insert_api_module_attribute("_comments", Comments)
-    def list(self, raise_on_failure=False) -> List[Union[PostData, None]]:
-        return super().list(raise_on_failure)
+    def all(self, raise_on_failure=False) -> List[Union[PostData, None]]:
+        return super().all(raise_on_failure)

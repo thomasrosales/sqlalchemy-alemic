@@ -59,5 +59,5 @@ class Users(APIRequest):
         return super().retrieve(model_id, raise_on_failure)
 
     @insert_api_module_attribute("_posts", PostsReadOnly)
-    def list(self, raise_on_failure=False) -> List[Union[UserData, None]]:
-        return super().list(raise_on_failure)
+    def all(self, raise_on_failure=False) -> List[Union[UserData, None]]:
+        return super().all(raise_on_failure)
