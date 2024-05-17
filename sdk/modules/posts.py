@@ -1,12 +1,14 @@
+import asyncio
 from dataclasses import dataclass
-from typing import Dict, Optional, Union, List
+from typing import Dict, List, Optional, Union
 
+from core.enums import Constants
 from sdk.modules.decorators import insert_api_module_attribute
 from sdk.request import (
     APIRequest,
+    APIRequestAllMixin,
     APIRequestBase,
     APIRequestRetrieveMixin,
-    APIRequestAllMixin,
 )
 
 
@@ -21,12 +23,15 @@ class CommentData:
 
 class Comments(APIRequestBase, APIRequestAllMixin):
 
-    resource = "posts/{0}/comments"
-    model = CommentData
+    RESOURCE = "posts/{0}/comments"
+    MODEL = CommentData
 
     def __init__(self, token, related_instance_id=None):
-        resource = self.resource.format(related_instance_id)
-        super().__init__(self.model, resource, token)
+        resource = self.RESOURCE.format(related_instance_id)
+        super().__init__(Constants.BASE_URL, self.MODEL, resource, token)
+
+    def list(self, raise_on_failure=False) -> List[Union[CommentData, None]]:
+        return asyncio.run(super().list(raise_on_failure))
 
 
 @dataclass
@@ -48,12 +53,12 @@ class PostData:
 
 
 class Posts(APIRequest):
-    resource = "posts"
-    model = PostData
+    RESOURCE = "posts"
+    MODEL = PostData
 
     def __init__(self, token):
         self._token = token
-        super().__init__(self.model, self.resource, self._token)
+        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE, self._token)
 
     @insert_api_module_attribute("_comments", Comments)
     def retrieve(self, model_id: int, raise_on_failure=False) -> Union[PostData, None]:
@@ -65,13 +70,17 @@ class Posts(APIRequest):
 
 
 class PostsReadOnly(APIRequestBase, APIRequestAllMixin):
-    resource = "posts"
-    model = PostData
+    RESOURCE = "posts"
+    MODEL = PostData
 
     def __init__(self, token, related_instance_id=None):
         self._token = token
         super().__init__(
-            self.model, self.resource, self._token, query_params={"userId": related_instance_id}
+            Constants.BASE_URL,
+            self.MODEL,
+            self.RESOURCE,
+            self._token,
+            query_params={"userId": related_instance_id},
         )
 
     @insert_api_module_attribute("_comments", Comments)

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Dict, Optional
 
+from core.enums import Constants
 from sdk.request import APIRequest
 
 
@@ -17,8 +18,8 @@ class TodoData:
 
 class Todos(APIRequest):
 
-    resource = "todos"
-    model = TodoData
+    RESOURCE = "todos"
+    MODEL = TodoData
 
     def __init__(self, token):
-        super().__init__(self.model, self.resource, token)
+        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE, token)

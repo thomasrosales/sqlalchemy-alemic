@@ -1,3 +1,4 @@
+import asyncio
 from functools import wraps
 
 
@@ -10,14 +11,16 @@ def insert_api_module_attribute(underscore_attribute_name, APIModuleClass):
                 model, model_id = args
             else:
                 model, *_ = args
-            result = func(*args, **kwargs)
+            result = asyncio.run(func(*args, **kwargs))
             if isinstance(result, list):
                 if len(result) > 0:
                     for instance in result:
                         setattr(
                             instance,
                             underscore_attribute_name,
-                            APIModuleClass(model._token, related_instance_id=instance.id),
+                            APIModuleClass(
+                                model._token, related_instance_id=instance.id
+                            ),
                         )
             elif result:
                 setattr(

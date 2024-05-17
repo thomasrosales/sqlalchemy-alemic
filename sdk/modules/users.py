@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
+from core.enums import Constants
 from sdk.modules.decorators import insert_api_module_attribute
 from sdk.modules.posts import Posts, PostsReadOnly
 from sdk.request import APIRequest
@@ -25,14 +26,17 @@ class AddressData:
 
 @dataclass
 class UserData:
-    name: str
-    username: str
     email: int
-    phone: str
-    website: str
     id: Optional[int] = None
     address: AddressData = None
     company: CompanyData = None
+    name: Optional[str] = None
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    avatar: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
 
     def __post_init__(self):
         self._posts = None
@@ -43,13 +47,12 @@ class UserData:
 
 
 class Users(APIRequest):
-
-    resource = "users"
-    model = UserData
+    RESOURCE = "users"
+    MODEL = UserData
 
     def __init__(self, token):
         self._token = token
-        super().__init__(self.model, self.resource, token)
+        super().__init__(Constants.BASE_USERS, self.MODEL, self.RESOURCE, token)
 
     @insert_api_module_attribute("_posts", PostsReadOnly)
     def retrieve(self, model_id: int, raise_on_failure=False) -> Union[UserData, None]:

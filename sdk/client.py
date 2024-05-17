@@ -1,9 +1,8 @@
+from environs import Env
+
 from sdk.modules.posts import Posts
 from sdk.modules.todos import Todos
 from sdk.modules.users import Users
-
-from environs import Env
-
 
 env = Env()
 env.read_env()

@@ -1,8 +1,13 @@
 from database.controllers import create_user, get_user_by_id
-from sdk.client import client, Client
+from sdk.client import Client, client
 
 if __name__ == "__main__":
-
+    breakpoint()
+    users = client.users.list()
+    print(users)
+    post1 = client.posts.retrieve(1)
+    print(post1)
+    """
     spongebob = get_user_by_id(1)
     sandy = get_user_by_id(2)
     patrick = get_user_by_id(3)
@@ -29,6 +34,7 @@ if __name__ == "__main__":
     print(sandy)
     print(patrick)
 
+
     # users = client.users.list()
     user = client.users.retrieve(1, raise_on_failure=True)
     post = user.posts.list()[0]
@@ -46,3 +52,4 @@ if __name__ == "__main__":
 
     # post = PostData(body="ttt", userId=1, title="asd")
     # print(client.posts.create(post.to_payload()))
+    """

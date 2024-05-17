@@ -1,13 +1,16 @@
-from typing import TYPE_CHECKING, Dict, List, Union, Callable
+import asyncio
+from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
+from aiohttp import ClientSession
 from requests.auth import AuthBase
 
+from core.enums import Constants
 from sdk.request.decorators import request_handler
 from sdk.request.exceptions import APIException
 
 if TYPE_CHECKING:
-    from sdk.modules.posts import PostData, CommentData
+    from sdk.modules.posts import CommentData, PostData
     from sdk.modules.todos import TodoData
 
 
@@ -21,48 +24,90 @@ class BearerAuth(AuthBase):
 
 
 class APIRequestBase:
-    BASE_URL = "https://jsonplaceholder.typicode.com"
+    APPLICATION_URLS = {
+        Constants.BASE_URL: "https://jsonplaceholder.typicode.com",
+        Constants.BASE_USERS: "https://reqres.in/api",
+    }
 
-    def __init__(self, model, resource: str, token: str, query_params=None):
+    def _set_query_params(self, query_params):
+        params = {"page": 1, "per_page": 5}
+        if query_params is None:
+            query_params = {}
+        params.update(query_params)
+        return params
+
+    def __init__(
+        self, application, model, resource: str, token: str, query_params=None
+    ):
+        self._application = application
         self._model = model
         self._resource = resource
         self._auth = BearerAuth(token)
-        self._params = query_params
+        self._params = self._set_query_params(query_params)
+
+    async def _fetch_data(self, url, params, raise_on_failure):
+        async with ClientSession() as session:
+            headers = {"Authorization": f"Basic  {self._auth.token}"}
+            async with session.get(url, headers=headers, params=params) as response:
+                if response.status != 200:
+                    if raise_on_failure:
+                        raise APIException("something went wrong")
+                    return []
+                return await response.json()
+
+    def _fetch_data_sync(self, url, raise_on_failure):
+        response = requests.get(url, auth=self._auth, params=self._params)
+        if response.status_code != 200:
+            if raise_on_failure:
+                raise APIException("something went wrong")
+            return []
+
+        return response.json()
 
 
 class APIRequestRetrieveMixin:
 
-    def retrieve(
+    async def retrieve(
         self, model_id: int, raise_on_failure=False
     ) -> Union["PostData", "TodoData", "CommentData", None]:
-        print(f"{self.BASE_URL}/{self._resource}/{model_id}")
-        response = requests.get(
-            f"{self.BASE_URL}/{self._resource}/{model_id}",
-            auth=self._auth,
-            params=self._params,
+        data_json = self.fetch_data_sync(
+            f"{self.APPLICATION_URLS[self._application]}/{self._resource}/{model_id}",
+            raise_on_failure,
         )
-        if response.status_code != 200:
-            if raise_on_failure:
-                raise APIException("something went wrong")
-            return None
-        data = response.json()
+        data = data_json["data"] if "data" in data_json else data_json
         return self._model(**data)
 
 
 class APIRequestAllMixin:
 
-    def list(
+    async def list(
         self, raise_on_failure=False
     ) -> List[Union["PostData", "TodoData", "CommentData", None]]:
-        print(f"{self.BASE_URL}/{self._resource}/")
-        response = requests.get(
-            f"{self.BASE_URL}/{self._resource}/", auth=self._auth, params=self._params
-        )
-        if response.status_code != 200:
-            if raise_on_failure:
-                raise APIException("something went wrong")
-            return []
-        data = response.json()
+        url = f"{self.APPLICATION_URLS[self._application]}/{self._resource}/"
+        data_json = self.fetch_data_sync(url, raise_on_failure)
+        if isinstance(data_json, dict):
+            total_pages = data_json.get("total_pages")
+            tasks = set()
+            async_response = []
+
+            if total_pages > 1:
+                for page_count in range(1, total_pages):
+                    params = self._params
+                    params.update({"page": page_count + 1})
+                    tasks.add(
+                        asyncio.create_task(
+                            self.fetch_data(url, params, raise_on_failure=False)
+                        )
+                    )
+
+                async_response = await asyncio.gather(*tasks)
+
+            data = data_json["data"]
+            for ar in async_response:
+                data.extend(ar["data"])
+        else:
+            data = data_json
+
         return [self._model(**item) for item in data]
 
 
