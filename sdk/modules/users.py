@@ -67,9 +67,8 @@ class Users(APIRequest):
     RESOURCE = "users"
     MODEL = UserData
 
-    def __init__(self, token):
-        self._token = token
-        super().__init__(Constants.BASE_USERS, self.MODEL, self.RESOURCE, token)
+    def __init__(self):
+        super().__init__(Constants.BASE_USERS, self.MODEL, self.RESOURCE)
 
     @insert_api_module_attribute("_posts", PostsReadOnly)
     def retrieve(self, model_id: int, raise_on_failure=False) -> Union[UserData, None]:
@@ -80,10 +79,7 @@ class Users(APIRequest):
         return super().all(raise_on_failure)
 
     def create_bulk(
-        self,
-        data_models: List["UserData"],
-        return_model_factory=None,
-        raise_on_failure=False,
+        self, data_models: List["UserData"], raise_on_failure=False, **kwargs
     ) -> List["UserData"]:
         return super().create_bulk(
             data_models,

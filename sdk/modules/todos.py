@@ -21,5 +21,5 @@ class Todos(APIRequest):
     RESOURCE = "todos"
     MODEL = TodoData
 
-    def __init__(self, token):
-        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE, token)
+    def __init__(self):
+        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE)

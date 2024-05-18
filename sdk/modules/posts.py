@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from core.enums import Constants
 from sdk.modules.decorators import insert_api_module_attribute
-from sdk.request import APIListAllMixin, APIRequest, APIRequestBase, APIRetrieveMixin
+from sdk.request import APIListAllMixin, APIRequest, APIRequestBase
 
 
 @dataclass
@@ -21,9 +21,9 @@ class Comments(APIRequestBase, APIListAllMixin):
     RESOURCE = "posts/{0}/comments"
     MODEL = CommentData
 
-    def __init__(self, token, related_instance_id=None):
+    def __init__(self, related_instance_id=None):
         resource = self.RESOURCE.format(related_instance_id)
-        super().__init__(Constants.BASE_URL, self.MODEL, resource, token)
+        super().__init__(Constants.BASE_URL, self.MODEL, resource)
 
     def all(self, raise_on_failure=False) -> List[Union[CommentData, None]]:
         return asyncio.run(super().all(raise_on_failure))
@@ -51,9 +51,8 @@ class Posts(APIRequest):
     RESOURCE = "posts"
     MODEL = PostData
 
-    def __init__(self, token):
-        self._token = token
-        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE, self._token)
+    def __init__(self):
+        super().__init__(Constants.BASE_URL, self.MODEL, self.RESOURCE)
 
     @insert_api_module_attribute("_comments", Comments)
     def retrieve(self, model_id: int, raise_on_failure=False) -> Union[PostData, None]:
@@ -68,13 +67,11 @@ class PostsReadOnly(APIRequestBase, APIListAllMixin):
     RESOURCE = "posts"
     MODEL = PostData
 
-    def __init__(self, token, related_instance_id=None):
-        self._token = token
+    def __init__(self, related_instance_id=None):
         super().__init__(
             Constants.BASE_URL,
             self.MODEL,
             self.RESOURCE,
-            self._token,
             query_params={"userId": related_instance_id},
         )
 
