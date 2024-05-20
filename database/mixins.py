@@ -1,12 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, func
+from sqlalchemy import TIMESTAMP, func, INTEGER
 from sqlalchemy.orm import Mapped, mapped_column
 
 
 class TimeStampMixin:
     updated_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP, nullable=False, onupdate=func.now()
+        TIMESTAMP,
+        nullable=True,
+        onupdate=func.now(),
     )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, nullable=False, server_default=func.now()

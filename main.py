@@ -1,65 +1,63 @@
-from database.controllers import create_user, get_user_by_id
-from sdk.client import Client, client
-from sdk.modules.posts import PostData
-from sdk.modules.users import UserData
+import random
+
+from faker import Faker
+
+from database.controllers import (
+    create_user,
+    get_user_by_id,
+    add_order,
+    add_product,
+    add_product_to_order, select_all_user_orders, get_total_number_of_orders, get_total_number_order_filter_by,
+)
+
+
+def seed_fake_data():
+    Faker.seed(0)
+    fake = Faker()
+
+    users = []
+    orders = []
+    products = []
+    for _ in range(50):
+        referrer_id = None if not users else users[-1].id
+        user = create_user(
+            name=fake.name(),
+            last_name=fake.last_name(),
+            emails=[fake.email()],
+            referrer_id=referrer_id,
+        )
+        users.append(user)
+
+    for _ in range(10):
+        order = add_order(random.choice(users).id)
+        orders.append(order)
+
+    for _ in range(10):
+        product = add_product(
+            title=fake.word(),
+            description=fake.sentence(),
+            # price=fake.pyint()
+        )
+        products.append(product)
+
+    for order in orders:
+        for _ in range(3):
+            add_product_to_order(
+                order_id=order.id,
+                product_id=random.choice(products).id,
+                quantity=fake.pyint(),
+            )
+
 
 if __name__ == "__main__":
-    users = client.users.all()
-    print(users)
-    post1 = client.posts.retrieve(1000)
-    print(post1)
-    post_to_be_created = [
-        PostData(
-            userId=1,
-            title=f"Post-{index}",
-            body=f"My body {index}",
-        )
-        for index in range(10)
-    ]
+    for row in select_all_user_orders(10):
+        # Product, Order, User.name, OrderProduct.quantity
+        print(f"Products: {row[0].title}")
+        print(f"Order: {row[1].id}")
+        print(f"User: {row[2]}")
+        print(f"Quantity: {row[3]}")
 
-    posts = client.posts.create_bulk(post_to_be_created)
-    print(posts)
-
-    """
-    spongebob = get_user_by_id(1)
-    sandy = get_user_by_id(2)
-    patrick = get_user_by_id(3)
-
-    if not spongebob:
-        spongebob = create_user(
-            "Spongebob", "Squarepants", ["spongebob@sqlalchemy.org"]
-        )
-
-    if not sandy:
-        sandy = create_user(
-            name="sandy",
-            last_name="Sandy Cheeks",
-            emails=[
-                "sandy@sqlalchemy.org",
-                "sandy@squirrelpower.org",
-            ],
-        )
-
-    if not patrick:
-        patrick = create_user(name="patrick", last_name="Patrick Star", emails=[])
-
-    print(spongebob)
-    print(sandy)
-    print(patrick)
-
-
-    # users = client.users.list()
-    user = client.users.retrieve(1, raise_on_failure=True)
-    post = user.posts.list()[0]
-
-    breakpoint()
-
-    post3 = client.posts.retrieve(1000, raise_on_failure=True)
-
-    post1 = client.posts.retrieve(1)
-    post2 = client.posts.retrieve(4)
-    print(post1.comments.list())
-    print(post2.comments.list())
-
-    # print(client.todos.retrieve(197))
-    """
+    num_orders = get_total_number_of_orders()
+    print(num_orders)
+    print(get_total_number_order_filter_by())
+    # seed_fake_data()

@@ -14,11 +14,11 @@ class User(Base, CommonMixin, TimeStampMixin):
 
     # Relations
 
-    referrer_id: Mapped[Optional[int]] = mapped_column(
+    referrer_id: Mapped[int] = mapped_column(
         ForeignKey("user_account.id", ondelete="SET NULL"), nullable=True
     )
     referrer: Mapped["User"] = relationship(
-        back_populates="referrers", remote_side="User.id"
+        backref="referrer_user", remote_side="User.id"
     )
     addresses: Mapped[List["Address"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -46,6 +46,12 @@ class Product(Base, CommonMixin, TimeStampMixin):
     title: Mapped[str] = mapped_column(String(50), unique=True)
     description: Mapped[str] = mapped_column(Text())
 
+    # Relations
+
+    order_products: Mapped[List["OrderProduct"]] = relationship(
+        back_populates="product", cascade="all, delete"
+    )
+
 
 class Order(Base, CommonMixin, TimeStampMixin):
     __tablename__ = "orders"
@@ -68,11 +74,9 @@ class OrderProduct(Base, CommonMixin):
     # Relations
 
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("products.id", ondelete="RESTRICT"), primary_key=True
+        ForeignKey("products.id", ondelete="RESTRICT")
     )
     product: Mapped["Product"] = relationship(back_populates="order_products")
 
-    order_id: Mapped[int] = mapped_column(
-        ForeignKey("orders.id", ondelete="CASCADE"), primary_key=True
-    )
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     order: Mapped["Order"] = relationship(back_populates="order_products")

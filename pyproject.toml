@@ -19,6 +19,7 @@ requests = "^2.31.0"
 asyncio = "^3.4.3"
 aiohttp = "^3.9.5"
 loguru = "^0.7.2"
+faker = "^25.2.0"
 
 
 [build-system]

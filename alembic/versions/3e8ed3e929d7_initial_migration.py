@@ -94,7 +94,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["order_id"], ["orders.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("product_id", "order_id", "id"),
+        sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###
 
